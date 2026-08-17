@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS</title>
+    <style>
+    * {
+        box-sizing: border-box;
+    }
+    body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .wrap {
+        width: 95vw;
+        height: 95vh;
+        margin: 2.5vh auto;
+        border: 1px solid #ccc;
+        border-radius: 15px;
+        background-color: #fff;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+    header {
+        width: 398.58px;
+        height: 60px;
+        line-height: 60px;
+        margin: 50px auto 70px;
+        text-align: center;
+        font-size: 80px;
+        font-weight: 700;
+        cursor: pointer;
+        color: rgb(48, 140, 210);
+        flex-shrink: 0;
+    }
+    
+    /* Controller Bar (검색, 정렬, New 버튼) */
+    .control-bar {
+        width: 95%;
+        margin: 0 auto 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+    .search-sort-group {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex: 0.5;
+        max-width: 250px;
+    }
+    .search-input {
+        width: 100%;
+        padding: 6px 12px;
+        font-size: 9px;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        outline: none;
+        transition: box-shadow 0.2s;
+    }
+    .search-input:focus {
+        box-shadow: 0 0 0 1px rgba(31, 128, 203, 0.713);
+    }
+    .sort-select {
+        padding: 6px 10px;
+        font-size: 9px;
+        color: #4b5563;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        outline: none;
+        background-color: #fff;
+        cursor: pointer;
+    }
+    .btnNew {
+        padding: 6px 16px;
+        background-color: #fff;
+        color: #6d6c6c;
+        border: none;
+        box-shadow: 0 0 0 1px #e7e6e6;
+        border-radius: 8px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+    .btnNew:hover {
+        background: #faf7f7;
+    }
+    .btnNew:active {
+        transform: translateY(1px);
+    }
+
+    .lineBox {
+        width: 95%;
+        height: 1px;
+        margin: 0 auto 15px;
+        background-color: #ccc;
+        flex-shrink: 0;
+    }
+
+    /* main 영역 */
+    main {
+        width: 95%;
+        flex: 1;
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        position: relative;
+        margin: 0 auto;
+        overflow-y: auto;
+    }
+
+    /* 검색 결과 없음 안내 */
+    .no-results {
+        width: 100%;
+        padding: 40px 0;
+        text-align: center;
+        color: #888;
+        font-size: 15px;
+    }
+
+    /* title 목록 항목 */
+    .title {
+        width: calc(100% / 5);
+        height: 45px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-decoration: none;
+        font-size: 14px;
+        color: #2d83af;
+        border-right: 1px solid #e0dede;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+    }
+
+    /* 1025px ~ 1600px 구간 (5열) */
+@media screen and (min-width: 1025px) and (max-width: 2000px) {
+    .title {
+        width: calc(100% / 5);
+    }
+    .title:nth-child(5n) {
+        border-right: none;
+    }
+}
+
+/* 601px ~ 1024px 구간 (4열) */
+@media screen and (min-width: 601px) and (max-width: 1024px) {
+    .title {
+        width: calc(100% / 4);
+    }
+    .title:nth-child(4n) {
+        border-right: none;
+    }
+}
+
+/* 600px 이하 (3열) */
+@media screen and (max-width: 600px) {
+    .title {
+        width: calc(100% / 3);
+    }
+    .title:nth-child(3n) {
+        border-right: none;
+    }
+}
+    
+    .title:hover {
+        background: #67a9e7;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 15px;
+    }
+
+    /* 페이지네이션 (Pagination) 스타일 */
+    .pagination {
+        width: 95%;
+        margin: 15px auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+    .page-btn {
+        min-width: 32px;
+        height: 32px;
+        padding: 0 6px;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        background-color: #fff;
+        color: #2d83af;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .page-btn:hover:not(:disabled) {
+        background-color: #67a9e7;
+        color: #fff;
+        border-color: #67a9e7;
+    }
+    .page-btn.active {
+        background-color: #308cd2;
+        color: #fff;
+        border-color: #308cd2;
+        font-weight: 700;
+    }
+    .page-btn:disabled {
+        color: #ccc;
+        border-color: #eee;
+        cursor: not-allowed;
+    }
+
+    /* 상세 페이지 레이아웃 */
+    .detailView {
+        width: 100%;
+        height: 100%;
+        padding: 10px 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .detailHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .detailHeader h2 {
+        color: #2d83af;
+        margin: 0;
+    }
+    .detailTitleInput {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2d83af;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        padding: 6px 12px;
+        outline: none;
+        width: 60%;
+        transition: box-shadow 0.5s;
+    }
+    .detailTitleInput:focus {
+        box-shadow: 0 0 0 1px rgba(20, 51, 74, 0.709);
+    }
+    .detailTopBtns {
+        display: flex;
+        gap: 8px;
+    }
+    .btnTopAction {
+        padding: 6px 14px;
+        background-color: #fff;
+        color: #6d6c6c;
+        border: none;
+        box-shadow: 0 0 0 1px #e7e6e6;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.2s ease;
+    }
+    .btnTopAction:hover {
+        background: #faf7f7;
+    }
+    .btnTopAction.btnDelete:hover {
+        background: #fee2e2;
+        color: #dc2626;
+        box-shadow: 0 0 0 1px #fca5a5;
+    }
+
+    .detailBody {
+        flex: 1;
+        margin-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+    }
+    .detailText {
+        font-size: 15px;
+        line-height: 1.6;
+        color: #333;
+        white-space: pre-wrap;
+    }
+    .detailTextarea {
+        width: 100%;
+        height: 100%;
+        min-height: 200px;
+        padding: 12px;
+        font-size: 15px;
+        line-height: 1.6;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        outline: none;
+        resize: none;
+        font-family: inherit;
+        transition: box-shadow 0.5s;
+    }
+    .detailTextarea:focus {
+        box-shadow: 0 0 0 1px rgba(20, 51, 74, 0.709);
+    }
+
+    .detailFooter {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .btnBack {
+        padding: 8px 16px;
+        background-color: #308cd2;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .btnBack:hover {
+        background-color: #2570a8;
+    }
+    .btnSave {
+        background-color: #28a745;
+    }
+    .btnSave:hover {
+        background-color: #218838;
+    }
+
+    /* 모달 스타일 */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(3px);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+    .modal-overlay.active {
+        display: flex;
+        opacity: 1;
+    }
+    .modal-box {
+        background: #ffffff;
+        width: 420px;
+        padding: 25px 20px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        transform: translateY(-20px);
+        transition: transform 0.25s ease;
+    }
+    .modal-overlay.active .modal-box {
+        transform: translateY(0);
+    }
+    .modal-title {
+        margin: 0 0 15px 0;
+        font-size: 20px;
+        font-weight: 700;
+        color: #308cd2;
+        text-align: center;
+    }
+    .modal-input {
+        width: 100%;
+        padding: 10px 14px;
+        font-size: 15px;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        outline: none;
+        transition: box-shadow 0.5s;
+    }
+    .modal-input:focus {
+        box-shadow: 0 0 0 1px rgba(20, 51, 74, 0.709);
+    }
+    .modal-textarea {
+        width: 100%;
+        height: 120px;
+        margin-top: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        line-height: 1.5;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        outline: none;
+        resize: none;
+        font-family: inherit;
+        transition: box-shadow 0.5s;
+    }
+    .modal-textarea:focus {
+        box-shadow: 0 0 0 1px rgba(20, 51, 74, 0.709);
+    }
+    .modal-btns {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 20px;
+    }
+    .btn-modal {
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .btn-cancel {
+        background-color: #f3f4f6;
+        color: #4b5563;
+    }
+    .btn-cancel:hover {
+        background-color: #e5e7eb;
+    }
+    .btn-submit {
+        background-color: #308cd2;
+        color: #ffffff;
+    }
+    .btn-submit:hover {
+        background-color: #2570a8;
+    }
+    .btn-delete-confirm {
+        background-color: #dc2626;
+        color: #ffffff;
+    }
+    .btn-delete-confirm:hover {
+        background-color: #b91c1c;
+    }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <header id="headerTitle">JS</header>
+
+    <!-- 검색, 정렬, 작성 컨트롤 바 -->
+    <div class="control-bar" id="controlBar">
+        <div class="search-sort-group">
+            <input type="text" class="search-input" id="searchInput" placeholder="제목 검색...">
+            <select class="sort-select" id="sortSelect">
+                <option value="oldest">오래된순</option>
+                <option value="newest">최신순</option>
+                <option value="title">이름순</option>
+            </select>
+        </div>
+        <button class="btnNew" id="btnNew">New</button>
+    </div>
+
+    <div class="lineBox"></div>
+    <main id="mainContent">
+        <!-- 목록 또는 상세 내용 영역 -->
+    </main>
+
+    <!-- 페이지네이션 컨트롤 바 -->
+    <div class="pagination" id="paginationBar"></div>
+</div>
+
+<!-- 추가 모달 영역 -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+        <h3 class="modal-title">새 항목 추가</h3>
+        <input type="text" class="modal-input" id="modalTitleInput" placeholder="제목을 입력하세요" maxlength="30" autocomplete="off">
+        <textarea class="modal-textarea" id="modalContentInput" placeholder="내용을 입력하세요 (선택 사항)"></textarea>
+        <div class="modal-btns">
+            <button class="btn-modal btn-cancel" id="btnCancel">취소</button>
+            <button class="btn-modal btn-submit" id="btnSubmit">확인</button>
+        </div>
+    </div>
+</div>
+
+<!-- 삭제 확인 모달 영역 -->
+<div class="modal-overlay" id="deleteModalOverlay">
+    <div class="modal-box">
+        <h3 class="modal-title" style="color: #dc2626;">항목 삭제</h3>
+        <p id="deleteModalText" style="text-align: center; font-size: 15px; color: #4b5563; margin: 15px 0;"></p>
+        <div class="modal-btns">
+            <button class="btn-modal btn-cancel" id="btnDeleteCancel">취소</button>
+            <button class="btn-modal btn-delete-confirm" id="btnDeleteConfirm">삭제</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /*
+
+    [메뉴별 localStorage 변경 구간]
+    
+    1) const defaultList = Array(58).fill("JS");
+    2) const STORAGE_KEY = "gilStudy_js_items";
+    3) getStoredItems() 내부 const stored = localStorage.getItem("STORAGE_KEY");
+    4) renderDetail() 내부
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(currentItems));
+   
+        saveNewItem() 내부
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+
+        confirmDelete() 내부
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(currentItems));
+    
+    */
+    // 1) 초기 데이터 이름을 "html"에서 "JS"로 변경
+    const defaultList = Array(1).fill("JS");
+
+    // 2) 로컬스토리지 전용 키 변수 선언 (JS 전용 키)
+    const STORAGE_KEY = "gilStudy_JS_items";
+
+    let currentPage = 1;
+    let targetDeleteId = null;
+    const searchInput = document.getElementById("searchInput");
+    const sortSelect = document.getElementById("sortSelect");
+    const controlBar = document.getElementById("controlBar");
+    const paginationBar = document.getElementById("paginationBar");
+    const modalOverlay = document.getElementById("modalOverlay");
+    const modalTitleInput = document.getElementById("modalTitleInput");
+    const modalContentInput = document.getElementById("modalContentInput");
+    const btnCancel = document.getElementById("btnCancel");
+    const btnSubmit = document.getElementById("btnSubmit");
+
+    const deleteModalOverlay = document.getElementById("deleteModalOverlay");
+    const deleteModalText = document.getElementById("deleteModalText");
+    const btnDeleteCancel = document.getElementById("btnDeleteCancel");
+    const btnDeleteConfirm = document.getElementById("btnDeleteConfirm");
+
+    // HTML 특수문자 이스케이프 처리 (HTML 태그/코드 표시 문제 해결)
+    function escapeHTML(str) {
+        if (!str) return "";
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // 1. localStorage 데이터 가져오기 (삭제 상태 유지 수정)
+    function getStoredItems() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored !== null) {
+            const parsed = JSON.parse(stored);
+            return parsed.map((item, index) => {
+                if (typeof item === "string") {
+                    return { id: index, title: item, content: `이곳은 ${item} 항목의 상세 내용 영역입니다.` };
+                }
+                if (!item.id && item.id !== 0) item.id = index;
+                return item;
+            });
+        } else {
+            const defaultData = defaultList.map((title, index) => ({
+                id: index,
+                title: title,
+                content: `이곳은 ${title} 항목의 상세 내용 영역입니다.`
+            }));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+            return defaultData;
+        }
+    }
+
+    // 2. 목록 화면 렌더링 (검색, 정렬, 페이지네이션)
+    function renderList() {
+        const main = document.getElementById("mainContent");
+        let items = getStoredItems();
+        const itemsPerPage = getItemsPerPage();
+        controlBar.style.display = "flex";
+        paginationBar.style.display = "flex";
+
+        // 검색 필터
+        const keyword = searchInput.value.trim().toLowerCase();
+        if (keyword !== "") {
+            items = items.filter(item => item.title.toLowerCase().includes(keyword));
+        }
+
+        // 정렬
+        const sortType = sortSelect.value;
+        if (sortType === "newest") {
+            items.sort((a, b) => b.id - a.id);
+        } else if (sortType === "oldest") {
+            items.sort((a, b) => a.id - b.id);
+        } else if (sortType === "title") {
+            items.sort((a, b) => a.title.localeCompare(b.title, "ko"));
+        }
+        
+        main.innerHTML = "";
+
+        if (items.length === 0) {
+            main.innerHTML = `<div class="no-results">검색 결과가 없습니다.</div>`;
+            paginationBar.innerHTML = "";
+            return;
+        }
+
+        // 페이지 계산
+        const totalPages = Math.ceil(items.length / itemsPerPage);
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const pageItems = items.slice(startIndex, startIndex + itemsPerPage);
+        
+        pageItems.forEach((item) => {
+            const a = document.createElement("a");
+            a.className = "title";
+            a.textContent = item.title;
+            a.href = "#";
+            
+            a.addEventListener("click", (e) => {
+                e.preventDefault();
+                renderDetail(item.id);
+            });
+            
+            main.appendChild(a);
+        });
+
+        renderPagination(totalPages);
+    }
+
+    // 페이지 당 title 갯수 변경
+    function getItemsPerPage() {
+        const width = window.innerWidth;
+        if (width <= 600) {
+            return 33; // 600px 이하 (3열)
+        } else if (width <= 1024) {
+            return 44; // 601px ~ 1024px (4열)
+        } else {
+            return 50; // 1025px 이상 (5열)
+        }
+    }
+
+    // 3. 페이지네이션 버튼 생성
+    function renderPagination(totalPages) {
+        paginationBar.innerHTML = "";
+
+        // '이전' 버튼
+        const prevBtn = document.createElement("button");
+        prevBtn.className = "page-btn";
+        prevBtn.textContent = "‹";
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.addEventListener("click", () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderList();
+            }
+        });
+        paginationBar.appendChild(prevBtn);
+
+        // 페이지 번호 버튼
+        for (let i = 1; i <= totalPages; i++) {
+            const pageBtn = document.createElement("button");
+            pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+            pageBtn.textContent = i;
+            pageBtn.addEventListener("click", () => {
+                currentPage = i;
+                renderList();
+            });
+            paginationBar.appendChild(pageBtn);
+        }
+
+        // '다음' 버튼
+        const nextBtn = document.createElement("button");
+        nextBtn.className = "page-btn";
+        nextBtn.textContent = "›";
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.addEventListener("click", () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderList();
+            }
+        });
+        paginationBar.appendChild(nextBtn);
+    }
+
+    // 4. 상세 보기 화면 렌더링 (맞춤법 검사 비활성화 및 HTML 이스케이프 적용)
+    function renderDetail(id) {
+        const main = document.getElementById("mainContent");
+        controlBar.style.display = "none";
+        paginationBar.style.display = "none";
+
+        const items = getStoredItems();
+        let itemIndex = items.findIndex(i => i.id === id);
+        let item = items[itemIndex];
+        let isEditing = false;
+
+        function drawUI() {
+            const safeTitle = escapeHTML(item.title);
+            const safeContent = escapeHTML(item.content);
+
+            main.innerHTML = `
+                <div class="detailView">
+                    <div class="detailHeader">
+                        ${isEditing 
+                            ? `<input type="text" class="detailTitleInput" id="titleInput" value="${safeTitle}" maxlength="30" spellcheck="false" autocomplete="off" />`
+                            : `<h2>${safeTitle}</h2>`
+                        }
+                        <div class="detailTopBtns">
+                            <button class="btnTopAction" id="btnEdit">${isEditing ? '취소' : '수정'}</button>
+                            <button class="btnTopAction btnDelete" id="btnDelete">삭제</button>
+                        </div>
+                    </div>
+                    <div class="detailBody">
+                        ${isEditing 
+                            ? `<textarea class="detailTextarea" id="detailInput" spellcheck="false">${safeContent}</textarea>`
+                            : `<div class="detailText">${safeContent}</div>`
+                        }
+                    </div>
+                    <div class="detailFooter">
+                        <button class="btnBack" id="btnBack">목록으로 돌아가기</button>
+                        ${isEditing ? `<button class="btnBack btnSave" id="btnSave">저장</button>` : ''}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById("btnBack").addEventListener("click", renderList);
+
+            document.getElementById("btnDelete").addEventListener("click", () => {
+                targetDeleteId = id;
+                deleteModalText.textContent = `'${item.title}' 항목을 삭제하시겠습니까?`;
+                openDeleteModal();
+            });
+
+            document.getElementById("btnEdit").addEventListener("click", () => {
+                isEditing = !isEditing;
+                drawUI();
+                if (isEditing) {
+                    document.getElementById("titleInput").focus();
+                }
+            });
+
+            if (isEditing) {
+                document.getElementById("btnSave").addEventListener("click", () => {
+                    const newTitle = document.getElementById("titleInput").value.trim();
+                    const newContent = document.getElementById("detailInput").value;
+
+                    if (newTitle === "") {
+                        document.getElementById("titleInput").focus();
+                        return;
+                    }
+
+                    const currentItems = getStoredItems();
+                    const targetIndex = currentItems.findIndex(i => i.id === id);
+                    if (targetIndex !== -1) {
+                        currentItems[targetIndex].title = newTitle;
+                        currentItems[targetIndex].content = newContent;
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentItems));
+                        
+                        item.title = newTitle;
+                        item.content = newContent;
+                    }
+
+                    isEditing = false;
+                    drawUI();
+                });
+            }
+        }
+
+        drawUI();
+    }
+
+    // 5. 모달 제어 (맞춤법 검사 비활성화 추가)
+    function openModal() {
+        modalOverlay.classList.add("active");
+        modalTitleInput.value = "";
+        modalContentInput.value = "";
+        modalTitleInput.setAttribute("spellcheck", "false");
+        modalContentInput.setAttribute("spellcheck", "false");
+        modalTitleInput.focus();
+    }
+
+    function closeModal() {
+        modalOverlay.classList.remove("active");
+    }
+
+    function openDeleteModal() {
+        deleteModalOverlay.classList.add("active");
+        // 현재 포커스된 요소(삭제 버튼)의 포커스를 해제하여 Enter 중복 입력 방지
+        if (document.activeElement) {
+            document.activeElement.blur();
+        }
+    }
+
+    function closeDeleteModal() {
+        deleteModalOverlay.classList.remove("active");
+        targetDeleteId = null;
+    }
+
+    // 6. 새 항목 저장
+    function saveNewItem() {
+        const newTitle = modalTitleInput.value.trim();
+        const newContent = modalContentInput.value.trim();
+
+        if (newTitle !== "") {
+            const items = getStoredItems();
+            const newId = Date.now();
+            items.push({
+                id: newId,
+                title: newTitle,
+                content: newContent !== "" ? newContent : `내용 없음`
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+            
+            currentPage = Math.ceil(items.length / getItemsPerPage());
+            renderList();
+
+            closeModal();
+        } else {
+            modalTitleInput.focus();
+        }
+    }
+
+    // 7. 항목 삭제 확정 처리
+    function confirmDelete() {
+        if (targetDeleteId !== null) {
+            const currentItems = getStoredItems();
+            const deleteIndex = currentItems.findIndex(i => i.id === targetDeleteId);
+            if (deleteIndex !== -1) {
+                currentItems.splice(deleteIndex, 1);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(currentItems));
+            }
+            closeDeleteModal();
+            renderList();
+        }
+    }
+
+    // 이벤트 리스너 등록
+    searchInput.addEventListener("input", () => {
+        currentPage = 1;
+        renderList();
+    });
+
+    window.addEventListener("resize", () => {
+        renderList();
+    });
+
+    sortSelect.addEventListener("change", () => {
+        currentPage = 1;
+        renderList();
+    });
+
+    document.getElementById("btnNew").addEventListener("click", openModal);
+    btnCancel.addEventListener("click", closeModal);
+    btnSubmit.addEventListener("click", saveNewItem);
+
+    btnDeleteCancel.addEventListener("click", closeDeleteModal);
+    btnDeleteConfirm.addEventListener("click", confirmDelete);
+
+    modalOverlay.addEventListener("click", (e) => {
+        if (e.target === modalOverlay) closeModal();
+    });
+
+    deleteModalOverlay.addEventListener("click", (e) => {
+        if (e.target === deleteModalOverlay) closeDeleteModal();
+    });
+
+    window.addEventListener("keydown", (e) => {
+        if (deleteModalOverlay.classList.contains("active")) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                confirmDelete();
+            }
+            if (e.key === "Escape") {
+                closeDeleteModal();
+            }
+        }
+    });
+
+    modalTitleInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            modalContentInput.focus();
+        }
+        if (e.key === "Escape") closeModal();
+    });
+
+    modalContentInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && e.ctrlKey) {
+            saveNewItem();
+        }
+        if (e.key === "Escape") closeModal();
+    });
+
+    document.getElementById("headerTitle").addEventListener("click", () => {
+        searchInput.value = "";
+        sortSelect.value = "oldest";
+        currentPage = 1;
+        renderList();
+    });
+
+    renderList();
+</script>
+</body>
+</html>
