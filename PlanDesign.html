@@ -331,12 +331,51 @@
         background-color: #218838;
     }
 
+    /* 서식 툴바(좌측)와 No. 순서 입력(우측)을 한 줄에 배치하는 행 */
+    .detailToolbarRow {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+
+    /* No. 순서 입력 그룹 (삭제 버튼 바로 아래, 툴바와 같은 줄의 우측 끝) */
+    .no-order-group {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+        padding-top: 4px;
+    }
+    .no-order-label {
+        font-size: 12px;
+        color: #6d6c6c;
+        white-space: nowrap;
+    }
+    .no-order-input {
+        width: 78px;
+        padding: 4px 8px;
+        font-size: 12px;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        outline: none;
+        text-align: center;
+        transition: box-shadow 0.2s;
+    }
+    .no-order-input:focus {
+        box-shadow: 0 0 0 1px rgba(20, 51, 74, 0.709);
+    }
+    .no-order-input:disabled {
+        background-color: #f3f4f6;
+        color: #9ca3af;
+        cursor: not-allowed;
+    }
+
     /* 서식 툴바 스타일 (제목 입력 박스와 너비/우측 라인을 맞추기 위해 60%로 통일) */
     .format-toolbar {
         display: flex;
         gap: 6px;
         align-items: center;
-        margin-bottom: 8px;
         flex-wrap: wrap;
         width: 60%;
     }
@@ -849,11 +888,12 @@
         const sortType = sortSelect.value;
         if (sortType === "newest") {
             items.sort((a, b) => b.id - a.id);
-        } else if (sortType === "oldest") {
-            items.sort((a, b) => a.id - b.id);
         } else if (sortType === "title") {
             items.sort((a, b) => a.title.localeCompare(b.title, "ko"));
         }
+        // "oldest"(기본값)는 별도 정렬 없이 저장 배열 순서를 그대로 사용한다.
+        // No. 입력으로 배열 내 위치를 직접 옮기는 기능과 짝을 이루는 순서이므로,
+        // id 기준 정렬을 적용하면 수동으로 재배치한 순서가 화면에 반영되지 않는다.
         
         main.innerHTML = "";
 
@@ -955,6 +995,10 @@
             const safeContent = item.content;
             const parsedHtml = parseWikiLinks(safeContent);
 
+            const rawItems = getStoredItems();
+            const existingIndex = rawItems.findIndex(i => i.id === item.id);
+            const orderValue = existingIndex !== -1 ? (existingIndex + 1) : (rawItems.length + 1);
+
             main.innerHTML = `
                 <div class="detailView">
                     <div class="detailHeader">
@@ -968,8 +1012,9 @@
                         </div>
                     </div>
                     <div class="detailBody">
-                        ${isEditing 
-                            ? `
+                        <div class="detailToolbarRow">
+                            ${isEditing
+                                ? `
                                 <div class="format-toolbar">
                                     <button type="button" class="fmt-btn" style="font-weight:700;" onmousedown="event.preventDefault()" onclick="toggleBold('detailInput')">굵게</button>
                                     <span class="fmt-divider">|</span>
@@ -994,8 +1039,16 @@
                                         <button type="button" class="fmt-color-swatch" style="background:#e64980" title="분홍" onmousedown="event.preventDefault()" onclick="applyColor('detailInput', '#e64980')"></button>
                                     </div>
                                 </div>
-                                <div class="editable-box" id="detailInput" contenteditable="true" spellcheck="false">${safeContent}</div>
-                              `
+                                `
+                                : `<div></div>`
+                            }
+                            <div class="no-order-group">
+                                <span class="no-order-label">No.</span>
+                                <input type="text" class="no-order-input" id="noOrderInput" value="${orderValue}" inputmode="numeric" autocomplete="off" maxlength="6" ${isEditing ? '' : 'disabled'} oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+                            </div>
+                        </div>
+                        ${isEditing
+                            ? `<div class="editable-box" id="detailInput" contenteditable="true" spellcheck="false">${safeContent}</div>`
                             : `<div class="detailText" id="detailTextView">${parsedHtml}</div>`
                         }
                     </div>
@@ -1040,6 +1093,7 @@
                 document.getElementById("btnSave").addEventListener("click", () => {
                     const newTitle = document.getElementById("titleInput").value.trim();
                     const newContent = document.getElementById("detailInput").innerHTML;
+                    const orderInput = document.getElementById("noOrderInput");
 
                     if (newTitle === "") {
                         document.getElementById("titleInput").focus();
@@ -1048,12 +1102,21 @@
 
                     const currentItems = getStoredItems();
                     const targetIndex = currentItems.findIndex(i => i.id === id);
+                    let savedItem;
                     if (targetIndex !== -1) {
-                        currentItems[targetIndex].title = newTitle;
-                        currentItems[targetIndex].content = newContent;
+                        savedItem = currentItems[targetIndex];
+                        savedItem.title = newTitle;
+                        savedItem.content = newContent;
+                        currentItems.splice(targetIndex, 1);
                     } else {
-                        currentItems.push({ id: id, title: newTitle, content: newContent, memos: {} });
+                        savedItem = { id: id, title: newTitle, content: newContent, memos: {} };
                     }
+
+                    let orderNum = parseInt(orderInput.value, 10);
+                    if (isNaN(orderNum) || orderNum < 1) orderNum = 1;
+                    if (orderNum > currentItems.length + 1) orderNum = currentItems.length + 1;
+                    currentItems.splice(orderNum - 1, 0, savedItem);
+
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(currentItems));
 
                     item.title = newTitle;
