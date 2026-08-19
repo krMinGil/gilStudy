@@ -19,6 +19,7 @@ body {
     border: 1px solid #ccc;
     border-radius: 15px;
     background-color: #fff;
+    position: relative;
 }
 header {
     width: 80%;
@@ -31,54 +32,443 @@ header {
     cursor: default;
     color: rgb(48, 140, 210);
 }
-    main{
-        width: 80%;
-        height: 65%;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        border-top: 1px solid #ccc;
-    }
 
-    a {
-        width: 100%;
-        height: calc(95% / 8);
-        margin: 0 auto;
-        text-decoration: none;
-        color: #4175ac;
-        background-color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        font-weight: 500;
-        border-radius: 5px;
-    }
+/* 설정(톱니바퀴) 버튼 — header 영역 우측 상단 */
+.settings-btn {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    border: 1px solid #e7e6e6;
+    border-radius: 50%;
+    color: #6d6c6c;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+.settings-btn:hover {
+    background-color: #f3f4f6;
+    color: #308cd2;
+}
+.settings-btn.active {
+    background-color: #308cd2;
+    border-color: #308cd2;
+    color: #fff;
+}
+.settings-btn svg {
+    width: 22px;
+    height: 22px;
+}
 
-    /* 마우스 올렸을 때 */
-    a:hover {
-        background-color: rgb(194, 212, 225);
-    }
+/* 로그아웃 버튼 — header 영역 좌측 상단 */
+.logout-btn {
+    position: absolute;
+    top: 20px;
+    left: 25px;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    color: #9aa5b1;
+    cursor: pointer;
+    z-index: 10;
+}
+.logout-btn:hover {
+    color: #dc2626;
+}
 
-    /* 클릭했을 때 (실제 버튼이 눌리는 효과) */
-    a:active {
-        transform: translateY(2px);
-    }
+main {
+    width: 80%;
+    height: 65%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #ccc;
+    overflow-y: auto;
+}
+
+.menu-item {
+    position: relative;
+    width: 100%;
+    height: 54px;
+    flex-shrink: 0;
+    margin: 0 auto;
+}
+
+.menu-link, .menu-label {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    text-decoration: none;
+    color: #4175ac;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 500;
+    border-radius: 5px;
+}
+
+/* 마우스 올렸을 때 (일반 모드의 링크에만 적용) */
+.menu-link:hover {
+    background-color: rgb(194, 212, 225);
+}
+
+/* 클릭했을 때 (실제 버튼이 눌리는 효과) */
+.menu-link:active {
+    transform: translateY(2px);
+}
+
+/* 설정 모드에서는 항목이 링크가 아니라 삭제 버튼이 얹힌 정적 라벨이 된다 */
+.menu-item.editing .menu-label {
+    padding-right: 34px;
+    color: #7a7a7a;
+    cursor: default;
+}
+
+.menu-delete-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    border: 1px solid #fca5a5;
+    border-radius: 50%;
+    color: #dc2626;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.menu-delete-btn:hover {
+    background-color: #fee2e2;
+}
+
+.menu-add-tile {
+    width: 100%;
+    height: 54px;
+    flex-shrink: 0;
+    margin-top: 6px;
+    border: 1.5px dashed #b9c6d6;
+    border-radius: 5px;
+    background-color: #fff;
+    color: #308cd2;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.menu-add-tile:hover {
+    background-color: #f0f6fb;
+    border-color: #308cd2;
+}
+
+.menu-empty {
+    width: 100%;
+    padding: 30px 0;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+}
+
+/* 모달 스타일 (board.html과 동일한 톤) */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(3px);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+.modal-box {
+    background: #ffffff;
+    width: 380px;
+    padding: 25px 20px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    transform: translateY(-20px);
+    transition: transform 0.25s ease;
+}
+.modal-overlay.active .modal-box {
+    transform: translateY(0);
+}
+.modal-title {
+    margin: 0 0 15px 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #308cd2;
+    text-align: center;
+}
+.modal-input {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 15px;
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    outline: none;
+    transition: box-shadow 0.5s;
+}
+.modal-input:focus {
+    box-shadow: 0 0 0 1px rgba(20, 51, 74, 0.709);
+}
+.modal-btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+.btn-modal {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-cancel {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+.btn-cancel:hover {
+    background-color: #e5e7eb;
+}
+.btn-submit {
+    background-color: #308cd2;
+    color: #ffffff;
+}
+.btn-submit:hover {
+    background-color: #2570a8;
+}
+.btn-delete-confirm {
+    background-color: #dc2626;
+    color: #ffffff;
+}
+.btn-delete-confirm:hover {
+    background-color: #b91c1c;
+}
 </style>
 </head>
 <body onselectstart="return false">
     <div class="wrap">
+        <button type="button" class="logout-btn" id="logoutBtn">로그아웃</button>
+        <button type="button" class="settings-btn" id="settingsBtn" title="메뉴 설정">
+            <!-- 톱니바퀴 아이콘 (Feather Icons, MIT License) -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+        </button>
         <header>gilStudy</header>
-        <main>
-        <a href="Html.html">HTML</a>
-        <a href="Js.html">JS</a>
-        <a href="#">--</a>
-        <a href="#">--</a>
-        <a href="Godot.html">Godot</a>
-        <a href="Ai_Handle.html">Ai_handle</a>
-        <a href="Claude.html">Claude</a>
-        <a href="PlanDesign.html">PlanDesign</a>
-        </main>
+        <main id="menuGrid">
+            </main>
     </div>
+
+    <div class="modal-overlay" id="addMenuModalOverlay">
+        <div class="modal-box">
+            <h3 class="modal-title">새 메뉴 추가</h3>
+            <input type="text" class="modal-input" id="addMenuInput" placeholder="메뉴 이름을 입력하세요" maxlength="20" autocomplete="off" spellcheck="false" />
+            <div class="modal-btns">
+                <button class="btn-modal btn-cancel" id="btnAddMenuCancel">취소</button>
+                <button class="btn-modal btn-submit" id="btnAddMenuSubmit">추가</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="deleteMenuModalOverlay">
+        <div class="modal-box">
+            <h3 class="modal-title" style="color: #dc2626;">메뉴 삭제</h3>
+            <p id="deleteMenuModalText" style="text-align: center; font-size: 15px; color: #4b5563; margin: 15px 0;"></p>
+            <div class="modal-btns">
+                <button class="btn-modal btn-cancel" id="btnDeleteMenuCancel">취소</button>
+                <button class="btn-modal btn-delete-confirm" id="btnDeleteMenuConfirm">삭제</button>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
+<script src="dataStore.js"></script>
+<script>
+    let menuList = [];
+    let isEditMode = false;
+    let targetDeleteMenu = null;
+
+    const menuGrid = document.getElementById("menuGrid");
+    const settingsBtn = document.getElementById("settingsBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    const addMenuModalOverlay = document.getElementById("addMenuModalOverlay");
+    const addMenuInput = document.getElementById("addMenuInput");
+    const btnAddMenuCancel = document.getElementById("btnAddMenuCancel");
+    const btnAddMenuSubmit = document.getElementById("btnAddMenuSubmit");
+
+    const deleteMenuModalOverlay = document.getElementById("deleteMenuModalOverlay");
+    const deleteMenuModalText = document.getElementById("deleteMenuModalText");
+    const btnDeleteMenuCancel = document.getElementById("btnDeleteMenuCancel");
+    const btnDeleteMenuConfirm = document.getElementById("btnDeleteMenuConfirm");
+
+    function renderMenuGrid() {
+        menuGrid.innerHTML = "";
+
+        if (menuList.length === 0 && !isEditMode) {
+            menuGrid.innerHTML = `<div class="menu-empty">등록된 메뉴가 없습니다. 설정에서 추가해보세요.</div>`;
+            return;
+        }
+
+        menuList.forEach((menu) => {
+            const item = document.createElement("div");
+            item.className = "menu-item" + (isEditMode ? " editing" : "");
+
+            if (isEditMode) {
+                const label = document.createElement("div");
+                label.className = "menu-label";
+                label.textContent = menu.title;
+                item.appendChild(label);
+
+                const delBtn = document.createElement("button");
+                delBtn.type = "button";
+                delBtn.className = "menu-delete-btn";
+                delBtn.title = "메뉴 삭제";
+                delBtn.textContent = "×";
+                delBtn.addEventListener("click", () => openDeleteMenuModal(menu));
+                item.appendChild(delBtn);
+            } else {
+                const link = document.createElement("a");
+                link.className = "menu-link";
+                link.href = `board.html?id=${encodeURIComponent(menu.id)}`;
+                link.textContent = menu.title;
+                item.appendChild(link);
+            }
+
+            menuGrid.appendChild(item);
+        });
+
+        if (isEditMode) {
+            const addTile = document.createElement("button");
+            addTile.type = "button";
+            addTile.className = "menu-add-tile";
+            addTile.textContent = "+ 새 메뉴 추가";
+            addTile.addEventListener("click", openAddMenuModal);
+            menuGrid.appendChild(addTile);
+        }
+    }
+
+    settingsBtn.addEventListener("click", () => {
+        isEditMode = !isEditMode;
+        settingsBtn.classList.toggle("active", isEditMode);
+        renderMenuGrid();
+    });
+
+    // 새 메뉴 추가
+    function openAddMenuModal() {
+        addMenuInput.value = "";
+        addMenuModalOverlay.classList.add("active");
+        addMenuInput.focus();
+    }
+
+    function closeAddMenuModal() {
+        addMenuModalOverlay.classList.remove("active");
+    }
+
+    async function submitAddMenu() {
+        const title = addMenuInput.value.trim();
+        if (title === "") {
+            addMenuInput.focus();
+            return;
+        }
+        try {
+            await DataStore.addMenu(title);
+        } catch (e) {
+            console.error(e);
+            alert("메뉴 추가에 실패했습니다. 다시 시도해주세요.");
+            return;
+        }
+        closeAddMenuModal();
+        menuList = await DataStore.getMenuList();
+        renderMenuGrid();
+    }
+
+    btnAddMenuCancel.addEventListener("click", closeAddMenuModal);
+    btnAddMenuSubmit.addEventListener("click", submitAddMenu);
+    addMenuInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") submitAddMenu();
+        if (e.key === "Escape") closeAddMenuModal();
+    });
+    addMenuModalOverlay.addEventListener("click", (e) => {
+        if (e.target === addMenuModalOverlay) closeAddMenuModal();
+    });
+
+    // 메뉴 삭제 (해당 게시판의 게시글 데이터까지 함께 삭제)
+    function openDeleteMenuModal(menu) {
+        targetDeleteMenu = menu;
+        deleteMenuModalText.textContent = `'${menu.title}' 메뉴를 삭제하시겠습니까? 이 메뉴에 작성된 게시글도 모두 함께 삭제됩니다.`;
+        deleteMenuModalOverlay.classList.add("active");
+    }
+
+    function closeDeleteMenuModal() {
+        deleteMenuModalOverlay.classList.remove("active");
+        targetDeleteMenu = null;
+    }
+
+    async function confirmDeleteMenu() {
+        if (!targetDeleteMenu) return;
+        try {
+            await DataStore.deleteMenu(targetDeleteMenu.id);
+        } catch (e) {
+            console.error(e);
+            alert("메뉴 삭제에 실패했습니다. 다시 시도해주세요.");
+            return;
+        }
+        closeDeleteMenuModal();
+        menuList = await DataStore.getMenuList();
+        renderMenuGrid();
+    }
+
+    btnDeleteMenuCancel.addEventListener("click", closeDeleteMenuModal);
+    btnDeleteMenuConfirm.addEventListener("click", confirmDeleteMenu);
+    deleteMenuModalOverlay.addEventListener("click", (e) => {
+        if (e.target === deleteMenuModalOverlay) closeDeleteMenuModal();
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+        await DataStore.signOut();
+        location.href = "index.html";
+    });
+
+    // 로그인 세션이 없으면(로그아웃 상태거나 URL로 바로 접근한 경우) 로그인 화면으로 되돌린다.
+    async function init() {
+        const session = await DataStore.getSession();
+        if (!session) {
+            location.href = "index.html";
+            return;
+        }
+        menuList = await DataStore.getMenuList();
+        renderMenuGrid();
+    }
+
+    init();
+</script>
 </body>
 </html>
