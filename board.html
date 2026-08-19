@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>게시판</title>
     <style>
+    @view-transition {
+        navigation: auto;
+    }
     * {
         box-sizing: border-box;
     }
@@ -24,18 +27,40 @@
         flex-direction: column;
     }
     header {
-        height: 90px;
-        line-height: 90px;
-        margin: 50px auto 50px;
-        text-align: center;
-        font-size: 75px;
-        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 18px;
+        width: fit-content;
+        margin: 50px 0 30px 43px;
+        padding: 14px 32px 14px 18px;
+        background-color: #308cd2;
+        border-radius: 45px;
         cursor: pointer;
-        color: rgba(25, 36, 117, 0.316);
+        flex-shrink: 0;
+        transition: background-color 0.2s ease;
+    }
+    header:hover {
+        background-color: #2570a8;
+    }
+    .header-home-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #185fa5;
         flex-shrink: 0;
     }
-    header:hover{
-        color: #7b9ab2;
+    .header-home-icon svg {
+        width: 32px;
+        height: 32px;
+    }
+    .header-title-text {
+        font-size: 36px;
+        font-weight: 500;
+        color: #ffffff;
     }
 
     .lineBox1{
@@ -565,7 +590,15 @@
 <div class="wrap">
     <div class="headBox" onselectstart="return false">
         <a class="logo-link" onclick="location.href='selectMenu.html'">gilStudy</a>
-        <header id="headerTitle">게시판</header>
+        <header id="headerTitle">
+            <span class="header-home-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+            </span>
+            <span class="header-title-text" id="headerTitleText">게시판</span>
+        </header>
     </div>
     <div class="lineBox1"></div>
     <div class="control-bar" id="controlBar">
@@ -634,6 +667,17 @@
 
     const wordMemoModalOverlay = document.getElementById("wordMemoModalOverlay");
     const wordMemoModalTitle = document.getElementById("wordMemoModalTitle");
+
+    // 목록↔상세, 수정↔보기처럼 "화면이 통째로 바뀌는" 순간에만 부드러운 전환을 건다.
+    // 검색/정렬/페이지네이션처럼 같은 화면 안에서 목록만 계속 갱신되는 곳은
+    // 매번 전환 효과를 걸면 타이핑이 버벅이는 것처럼 보여서 일부러 제외했다.
+    function withTransition(updateFn) {
+        if (document.startViewTransition) {
+            document.startViewTransition(updateFn);
+        } else {
+            updateFn();
+        }
+    }
 
     // 서식 적용 전 선택 영역 저장 (색상 피커 등 포커스가 이동하는 컨트롤 대응)
     let savedSelectionRange = null;
@@ -909,7 +953,7 @@
 
             a.addEventListener("click", (e) => {
                 e.preventDefault();
-                renderDetail(item.id);
+                withTransition(() => renderDetail(item.id));
             });
 
             main.appendChild(a);
@@ -1050,7 +1094,7 @@
                 </div>
             `;
 
-            document.getElementById("btnBack").addEventListener("click", renderList);
+            document.getElementById("btnBack").addEventListener("click", () => withTransition(renderList));
 
             document.getElementById("btnDelete").addEventListener("click", () => {
                 targetDeleteId = id;
@@ -1061,13 +1105,15 @@
             document.getElementById("btnEdit").addEventListener("click", async () => {
                 if (isEditing && isNew) {
                     // 저장 전인 새 항목을 취소하면 만들다 만 빈 항목을 남기지 않고 목록으로 돌아감
-                    renderList();
+                    withTransition(renderList);
                     return;
                 }
                 if (isEditing) unbindSelectionAutoReset();
                 isEditing = !isEditing;
-                await drawUI();
-                if (isEditing) enterEditModeBindings();
+                withTransition(async () => {
+                    await drawUI();
+                    if (isEditing) enterEditModeBindings();
+                });
             });
 
             if (!isEditing) {
@@ -1122,7 +1168,7 @@
 
                     unbindSelectionAutoReset();
                     isEditing = false;
-                    await drawUI();
+                    withTransition(drawUI);
                 });
             }
         }
@@ -1225,7 +1271,7 @@
                 return;
             }
             closeDeleteModal();
-            renderList();
+            withTransition(renderList);
         }
     }
 
@@ -1245,7 +1291,7 @@
     });
 
     document.getElementById("btnNew").addEventListener("click", () => {
-        renderDetail(Date.now(), { isNew: true });
+        withTransition(() => renderDetail(Date.now(), { isNew: true }));
     });
 
     btnDeleteCancel.addEventListener("click", closeDeleteModal);
@@ -1291,7 +1337,7 @@
         }
 
         document.title = currentBoard.title;
-        document.getElementById("headerTitle").textContent = currentBoard.title;
+        document.getElementById("headerTitleText").textContent = currentBoard.title;
 
         renderList();
     }

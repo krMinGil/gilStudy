@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>selectMenu</title>
 <style>
+@view-transition {
+    navigation: auto;
+}
 * {
     box-sizing: border-box;
 }
@@ -329,6 +332,15 @@ main {
     const btnDeleteMenuCancel = document.getElementById("btnDeleteMenuCancel");
     const btnDeleteMenuConfirm = document.getElementById("btnDeleteMenuConfirm");
 
+    // 설정 모드 켜짐/꺼짐, 메뉴 추가/삭제처럼 그리드가 통째로 바뀌는 순간에만 부드러운 전환을 건다.
+    function withTransition(updateFn) {
+        if (document.startViewTransition) {
+            document.startViewTransition(updateFn);
+        } else {
+            updateFn();
+        }
+    }
+
     function renderMenuGrid() {
         menuGrid.innerHTML = "";
 
@@ -378,7 +390,7 @@ main {
     settingsBtn.addEventListener("click", () => {
         isEditMode = !isEditMode;
         settingsBtn.classList.toggle("active", isEditMode);
-        renderMenuGrid();
+        withTransition(renderMenuGrid);
     });
 
     // 새 메뉴 추가
@@ -407,7 +419,7 @@ main {
         }
         closeAddMenuModal();
         menuList = await DataStore.getMenuList();
-        renderMenuGrid();
+        withTransition(renderMenuGrid);
     }
 
     btnAddMenuCancel.addEventListener("click", closeAddMenuModal);
@@ -443,7 +455,7 @@ main {
         }
         closeDeleteMenuModal();
         menuList = await DataStore.getMenuList();
-        renderMenuGrid();
+        withTransition(renderMenuGrid);
     }
 
     btnDeleteMenuCancel.addEventListener("click", closeDeleteMenuModal);
